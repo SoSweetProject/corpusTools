@@ -10,6 +10,7 @@ import shapely
 import ujson
 import time
 import sys
+import ast
 import re
 import os
 
@@ -95,11 +96,28 @@ for file in os.listdir(jsonCorpusByDep) :
             sys.stdout.write("\rÉcriture du fichier \""+nameFile+".vrt\" - "+str(percentage)+"%")
             geo = str(tweet["geo"]["latitude"])+", "+str(tweet["geo"]["longitude"])
             vrtFile.write("<text id=\""+str(tweet["id"])+"\" user=\""+str(tweet["user"]["id"])+"\" date=\""+str(tweet["date"])+"\" geo=\""+geo+"\">\n")
+
+            tempAnnotations = {}
+            notInVrt = []
             for annotation in tweet["annotations"] :
-                if (annotation["xpostag"] is None) :
-                    vrtFile.write(annotation["form"]+"\t"+annotation["upostag"]+"\t"+annotation["lemma"]+"\n")
-                else :
-                    vrtFile.write(annotation["form"]+"\t"+annotation["xpostag"]+"\t"+annotation["lemma"]+"\n")
+                tempAnnotations[str(annotation["id"])]=annotation
+            for key in tempAnnotations :
+                id = ast.literal_eval(key)
+                if (type(id)==list) :
+                    for element in id :
+                        if (type(element)==int) :
+                            notInVrt.append(element)
+                    tempAnnotations[key]["xpostag"] = str(tempAnnotations[str(id[0])]["xpostag"])+"+"+str(tempAnnotations[str(id[2])]["xpostag"])
+                    tempAnnotations[key]["lemma"] = str(tempAnnotations[str(id[0])]["lemma"])+"+"+str(tempAnnotations[str(id[2])]["lemma"])
+            for annotation in tweet["annotations"] :
+                if (annotation["id"] not in notInVrt) :
+                    if (type(annotation["id"])==list) :
+                        vrtFile.write(tempAnnotations[str(annotation["id"])]["form"]+"\t"+tempAnnotations[str(annotation["id"])]["xpostag"]+"\t"+tempAnnotations[str(annotation["id"])]["lemma"]+"\n")
+                    elif (annotation["xpostag"] is None) :
+                        vrtFile.write(annotation["form"]+"\t"+annotation["upostag"]+"\t"+annotation["lemma"]+"\n")
+                    else :
+                        vrtFile.write(annotation["form"]+"\t"+annotation["xpostag"]+"\t"+annotation["lemma"]+"\n")
+
             vrtFile.write("</text>\n")
         sys.stdout.write("\rÉcriture du fichier \""+nameFile+".vrt\" - 100%\n")
         jsonFile.close()
