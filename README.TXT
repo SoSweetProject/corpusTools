@@ -9,3 +9,7 @@
 
 - fusion.py -
   fusionne les annotations des tweets au format CONLLU avec les tweets au format json
+
+- preprocessing.py -
+  Prétraitement pour parser les tweets (format d'entrée : Json)
+  Concaténation, mise en forme et nettoyage
