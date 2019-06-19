@@ -24,17 +24,17 @@ logger.addHandler(handler)
 
 # regex correspondant à chaque motif au niveau duquel on veut segmenter la phrase
 s=open("emoticons.txt").read().strip()
-regexEmoticons=re.compile('(\w\s+)((' + '|'.join(s.split('\n')) + ')+)(\s+\w)')
+regexEmoticons=re.compile('(?<!  "tweet": )(\S\s+)((' + '|'.join(s.split('\n')) + ')+)(\s+\w)')
 
-regexPunct=re.compile('(\w\s*)((\?|\.|\!)+)(\s+\w)')
+regexPunct=re.compile('(?<!  "tweet": )(\S\s*)((\?|\.|\!)+)(\s+\w)')
 
 s=open("emojis.txt").read().strip()
-regexEmoji=re.compile('(\w\s*)((' + '|'.join([re.escape(e) for e in s.split('\n')]) +')+)(\s+\w)')
+regexEmoji=re.compile('(?<!  "tweet": )(\S\s*)((' + '|'.join([re.escape(e) for e in s.split('\n')]) +'){1,10})(\s+\w)')
 
 regexInterj=re.compile('(\w\s+)((\\bm+d+r+\\b|\\bp+t+d+r+\\b|\\bl+o+l+\\b)+)(\s+\w)')
 
 regexMentions=re.compile('^(  "tweet": "(@.+?\s+)+)')
-regexHashtags=re.compile('((#[^\s]+\s*)+(https?://\S*\s*)*)$')
+regexHashtags=re.compile('((#\S+\s*)+(https?://\S*\s*)*)$')
 
 tweet=re.compile('^  "tweet": .*$')
 
