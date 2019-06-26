@@ -4,9 +4,30 @@ import argparse
 import datetime
 import logging
 import inspect
+import signal
+import time
 import glob
 import re
 import os
+
+# pour les cas où c'est vraiment trop long à matcher pour la regex (https://pythonadventures.wordpress.com/2012/12/08/raise-a-timeout-exception-after-x-seconds/)
+class Timeout():
+    """Timeout class using ALARM signal"""
+    class Timeout(Exception):
+        pass
+
+    def __init__(self, sec):
+        self.sec = sec
+
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.raise_timeout)
+        signal.alarm(self.sec)
+
+    def __exit__(self, *args):
+        signal.alarm(0) # disable alarm
+
+    def raise_timeout(self, *args):
+        raise Timeout.Timeout()
 
 # args
 parser = argparse.ArgumentParser(description = "Segmentation des tweets")
@@ -18,7 +39,7 @@ years = args.years
 # log
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler('./'+inspect.getfile(inspect.currentframe()).split('/')[-1].split('.')[0]+("_").join(str(y) for y in years)+'.log')
+handler = logging.FileHandler('./log/'+inspect.getfile(inspect.currentframe()).split('/')[-1].split('.')[0]+("_").join(str(y) for y in years)+'.log')
 handler.setFormatter(logging.Formatter("%(asctime)s; %(levelname)s; %(message)s"))
 logger.addHandler(handler)
 
@@ -29,7 +50,7 @@ regexEmoticons=re.compile('(?<!  "tweet": )(\S\s+)((' + '|'.join(s.split('\n')) 
 regexPunct=re.compile('(?<!  "tweet": )(\S\s*)((\?|\.|\!)+)(\s+\w)')
 
 s=open("emojis.txt").read().strip()
-regexEmoji=re.compile('(?<!  "tweet": )(\S\s*)((' + '|'.join([re.escape(e) for e in s.split('\n')]) +'){1,10})(\s+\w)')
+regexEmoji=re.compile('(?<!  "tweet": )(\S\s*)((' + '|'.join([re.escape(e) for e in s.split('\n')]) +')+)(\s+\w)')
 
 regexInterj=re.compile('(\w\s+)((\\bm+d+r+\\b|\\bp+t+d+r+\\b|\\bl+o+l+\\b)+)(\s+\w)')
 
@@ -72,18 +93,22 @@ def treatFile(file) :
     out = open(output+name+".segmented", "w")
     for line in fileIn :
         if tweet.match(line) :
-            # segmentation au niveau des émoticônes
-            line = segmenting(regexEmoticons, line)
-            # segmentation au niveau des émojis
-            line = segmenting(regexEmoji, line)
-            #segmentation au niveau des ponctuations
-            line = segmenting(regexPunct, line)
-            # segmentation au niveau des interjections (seulement lol, mdr et ptdr)
-            line = segmenting(regexInterj, line)
-            # segmentation au niveau des mentions de début de tweet
-            line = segmentingMentions(regexMentions, line)
-            # segmentation au niveau des hashtags de fin de tweet
-            line = segmentingHashtags(regexHashtags, line)
+            try :
+                with Timeout(20) :
+                    # segmentation au niveau des émoticônes
+                    line = segmenting(regexEmoticons, line)
+                    # segmentation au niveau des émojis
+                    line = segmenting(regexEmoji, line)
+                    #segmentation au niveau des ponctuations
+                    line = segmenting(regexPunct, line)
+                    # segmentation au niveau des interjections (seulement lol, mdr et ptdr)
+                    line = segmenting(regexInterj, line)
+                    # segmentation au niveau des mentions de début de tweet
+                    line = segmentingMentions(regexMentions, line)
+                    # segmentation au niveau des hashtags de fin de tweet
+                    line = segmentingHashtags(regexHashtags, line)
+            except Timeout.Timeout :
+                pass
             line = re.sub("\n", "\\\\n", line)
             line = line[:-2]
         out.write(line.rstrip()+"\n")
@@ -107,8 +132,10 @@ logger.info("output : %s", os.path.abspath(output))
 logger.info("%d fichiers à segmenter", len(files))
 
 try :
-    pool = Pool(4)
+    pool = Pool(processes=None)
     pool.map(treatFile, files)
 finally:
     pool.close()
     pool.join()
+
+logger.info("segmentation terminée !")
