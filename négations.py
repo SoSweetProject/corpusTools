@@ -221,13 +221,13 @@ for i,file in enumerate(files) :
     logger.info("Fichier %s - récupération terminée en %f", fileName, (t1-t0).total_seconds())
 
 
-fileOut = open("résultats_test_neg.tsv","w")
+fileOut = open("résultats_neg.tsv","w")
 fileOut.write("ID\tnbNeg\n")
 for tweet in neg :
     fileOut.write(tweet+"\t"+str(neg[tweet]["nbNeg"])+"\n")
 fileOut.close()
 
-fileOut = open("résultats_test_std.tsv","w")
+fileOut = open("résultats_std.tsv","w")
 fileOut.write("ID\tnbStd\n")
 for tweet in neg :
     fileOut.write(tweet+"\t"+str(neg[tweet]["nbDoubleNeg"])+"\n")
