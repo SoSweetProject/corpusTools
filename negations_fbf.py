@@ -137,7 +137,10 @@ for tweet in sentences :
                 formPrec = noDiacCase(tweet[indiceInTweet-1]["form"])
                 posPrec = tweet[indiceInTweet-1]["xpostag"]
 
-                if form=="personne" :
+                if formPrec in negWord :
+                    exception = True
+
+                elif form=="personne" :
 
                     if posPrec=="DET" or formPrec in ["de", "en", "chaque", "ni", "sans"] :
                         exception = True
