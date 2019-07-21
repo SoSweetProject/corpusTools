@@ -73,7 +73,7 @@ for tweet in sentences :
             indiceInTweet = token["id"]+soustrairePourIndice
 
             # ajustement des indices pour ne pas qu'ils "dépassent" ceux du tweet
-            indiceBegin = indiceInTweet-3
+            indiceBegin = indiceInTweet-4
             while indiceBegin<0 :
                 indiceBegin+=1
             indiceEnd = indiceInTweet+4
@@ -143,7 +143,7 @@ for tweet in sentences :
                         exception = True
 
                     elif posPrec=="P" and formPrec=="a" :
-                        for t in tweet[indiceBegin:indiceInTweet] :
+                        for t in tweet[indiceBegin+1:indiceInTweet] :
                             if noDiacCase(t["form"]) in negWord :
                                 exception = True
 
@@ -196,7 +196,7 @@ for tweet in sentences :
             if not exception and not ellipse :
                 neg[idTweet]["nbNeg"]+=1
                 standard = False
-                # on regarde s'il y a un "ne" dans une fenêtre de +3 autour du mot de négation
+                # on regarde s'il y a un "ne" dans une fenêtre de +4,+3 autour du mot de négation
                 if form != ["pas", "pa", "aps"] :
                     for t in tweet[indiceInTweet+1:indiceEnd] :
                         if t["form"].lower() in ne :
