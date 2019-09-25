@@ -205,11 +205,20 @@ for tweet in sentences :
                         if t["form"].lower() in ne :
                             neg[idTweet]["nbDoubleNeg"]+=1
                             standard = True
+                            # s'il s'agit de "n'importe" ou "n'imp", la négation est décomptée des négations standard
+                            if t["id"]+soustrairePourIndice<indiceEnd and tweet[t["id"]+soustrairePourIndice+1]["form"].lower() in ["importe", "imp"] : 
+                                neg[idTweet]["nbDoubleNeg"]-=1
+                                standard = False
                             break
                 if not standard :
                     for t in tweet[indiceBegin:indiceInTweet] :
                         if t["form"].lower() in ne :
                             neg[idTweet]["nbDoubleNeg"]+=1
+                            standard = True
+                            # s'il s'agit de "n'importe" ou "n'imp", la négation est décomptée des négations standard
+                            if t["id"]+soustrairePourIndice<indiceEnd and tweet[t["id"]+soustrairePourIndice+1]["form"].lower() in ["importe", "imp"] : 
+                                neg[idTweet]["nbDoubleNeg"]-=1
+                                standard = False
                             break
 
 
