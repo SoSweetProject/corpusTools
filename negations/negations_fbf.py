@@ -200,7 +200,7 @@ for tweet in sentences :
                 neg[idTweet]["nbNeg"]+=1
                 standard = False
                 # on regarde s'il y a un "ne" dans une fenêtre de +4,+3 autour du mot de négation
-                if form != ["pas", "pa", "aps"] :
+                if form not in ["pas", "pa", "aps"] :
                     for t in tweet[indiceInTweet+1:indiceEnd] :
                         if t["form"].lower() in ne :
                             neg[idTweet]["nbDoubleNeg"]+=1
