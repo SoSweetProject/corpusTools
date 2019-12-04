@@ -33,9 +33,8 @@ logger.info("Nombre de fichiers à traiter : "+str(len(files)))
 t0 = datetime.datetime.now()
 
 def neg_recup(file) : 
-
     neg = {}
-    
+
     fileName = os.path.basename(file)
     logger.info("Traitement du fichier "+fileName)
     file = open(file, "r")
@@ -254,7 +253,7 @@ def neg_recup(file) :
     nbTotalDoubleNeg=0
 
     for tweet in neg :
-        for n in neg[tweet] : 
+        for n in neg[tweet] :
             nbTotalNeg+=1
             if n["std"] :
                 nbTotalDoubleNeg += 1
@@ -270,18 +269,24 @@ finally:
     pool.close()
     pool.join()
 
-df = pd.DataFrame(columns=["tweet", "motNeg", "std", "sujet"])
+out = open("negByTweet_details.csv", "w")
+out.write("tweet\tmotNeg\tstd\tsujet")
+
+nbNEG = 0
+nbSTD = 0
 
 for i,neg in enumerate(results) :  
     logger.info("Récupération des résulats ("+str(i+1)+"/"+str(len(results))+")")
     for tweet in neg :
         if len(neg[tweet])!=0 :  
-            for dic in neg[tweet] : 
-                df.loc[len(df)] = [tweet, dic["motNeg"], dic["std"], dic["sujet"]]
+            for dic in neg[tweet] :
+                nbNEG+=1 
+                out.write("\n"+str(tweet)+"\t"+str(dic["motNeg"])+"\t"+str(dic["std"])+"\t"+str(dic["sujet"]))
+                if dic["std"] :
+                   nbSTD+=1
+out.close()
 
-df.to_csv("./negByTweet_details.csv")
-
-logger.info(str(len(df))+" négations au total")
-logger.info(str(len(df[df["std"]==True]))+" négations standard au total")
+logger.info(str(nbNEG)+" négations au total")
+logger.info(str(nbSTD)+" négations standard au total")
 
 logger.info("récupération des négations sur l'ensemble des fichiers terminée en "+str(datetime.datetime.now()-t0))
