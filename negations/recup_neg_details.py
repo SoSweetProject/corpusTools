@@ -81,7 +81,7 @@ def neg_recup(file) :
             # Si mot de négation
             if form in negWord :
 
-                negInfos = {"motNeg":"", "std":False, "sujet":None}
+                negInfos = {"motNeg":"", "std":False, "sujet":None, "allSuj":[]}
 
                 exception = False
                 ellipse = False
@@ -198,26 +198,34 @@ def neg_recup(file) :
                 if not exception and not ellipse :
                     negInfos["motNeg"] = form
                     # Ici on regarde quel est la nature du sujet du verbe auquel la négation est rattachée
-                    i = 0
                     candidats = {}
                     headIsAVerb = False
-                    for tok in tweet : 
+                    for n,tok in enumerate(tweet) : 
                         if tok["id"]==formDetails["head"] and tok["upostag"]=="V" : 
                             headIsAVerb = True
-                        if tok["head"]==formDetails["head"] and tok["id"]!=formDetails["id"] and tok["deprel"]=="suj" and not re.match(r"^@.+?", tok["form"]): 
-                            if tok["xpostag"]=="NC" :
-                                dist = abs(tok["id"]-formDetails["head"])
-                                candidats[dist]="GN"
-                                i+=1
-                            elif tok["xpostag"]=="PRO" or tok["xpostag"]=="CLS" : 
-                                dist = abs(tok["id"]-formDetails["head"])
-                                candidats[dist]="PRO|CLS"
-                                i+=1
+                        if tok["head"]==formDetails["head"] and tok["id"]!=formDetails["id"] and tok["deprel"]=="suj" and not tok["form"].startswith("@") and not tok["form"].startswith("http"): 
+                            if tok["form"].startswith("#") and n+1==len(tweet) :
+                                pass 
+                            else :
+                                negInfos["allSuj"].append(tok["xpostag"])
+                                if tok["xpostag"]=="NC" :
+                                    dist = abs(tok["id"]-formDetails["head"])
+                                    candidats[dist]="GN"
+                                elif tok["xpostag"]=="PRO" or tok["xpostag"]=="CLS" : 
+                                    dist = abs(tok["id"]-formDetails["head"])
+                                    candidats[dist]="PRO|CLS"
+                                else : 
+                                    dist = abs(tok["id"]-formDetails["head"])
+                                    candidats[dist]=tok["xpostag"]
                     candidats_sorted = sorted(candidats.keys())
+                    
                     if not headIsAVerb : 
                         negInfos["sujet"]=None
+                        negInfos["allSuj"]=[]
                     elif len(candidats_sorted)==0 : 
-                        negInfos["sujet"]="autre"
+                        negInfos["sujet"]="NoSuj"
+                    elif candidats[candidats_sorted[0]] is None :
+                        negInfos["sujet"]="_"
                     else : 
                         negInfos["sujet"]=candidats[candidats_sorted[0]]
 
@@ -270,7 +278,7 @@ finally:
     pool.join()
 
 out = open("negByTweet_details.csv", "w")
-out.write("tweet\tmotNeg\tstd\tsujet")
+out.write("tweet\tmotNeg\tstd\tsujet\tallSuj")
 
 nbNEG = 0
 nbSTD = 0
@@ -281,7 +289,7 @@ for i,neg in enumerate(results) :
         if len(neg[tweet])!=0 :  
             for dic in neg[tweet] :
                 nbNEG+=1 
-                out.write("\n"+str(tweet)+"\t"+str(dic["motNeg"])+"\t"+str(dic["std"])+"\t"+str(dic["sujet"]))
+                out.write("\n"+str(tweet)+"\t"+str(dic["motNeg"])+"\t"+str(dic["std"])+"\t"+str(dic["sujet"])+"\t"+str(dic["allSuj"]))
                 if dic["std"] :
                    nbSTD+=1
 out.close()
