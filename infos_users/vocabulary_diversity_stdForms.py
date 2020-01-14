@@ -35,6 +35,7 @@ for i,line in enumerate(file) :
     if i%1000 == 0 :
         sys.stdout.write("\r"+str(i+1))
     form = re.match(r"^(.+?)\t.+?$", line.rstrip()).group(1)
+    form = form.lower()
     lexique[form]=""
   
 file.close()
@@ -71,9 +72,10 @@ def recup_forms(file) :
                 notConsider.append(token["id"][0])
                 notConsider.append(token["id"][2])
             if token["id"] not in notConsider :
-                # on ne conserve que les formes qui ne sont ni des hashtags, ni des mentions, et qui ne contiennent pas uniquement des caractères non alpha-numériques (permet de ne pas inclure les emojis et émoticônes entre autres (exclut aussi la ponctuation du coup))
-                if not re.match(r"^\W+$", token["form"]) and not re.match(r"^[#@].+?$", token["form"]) : 
-                    forms[idTweet].append(token["form"])
+                # on ne conserve que les formes qui ne sont ni des hashtags, ni des mentions, ni des urls, et qui ne contiennent pas uniquement des caractères non alpha-numériques (permet de ne pas inclure les emojis et émoticônes entre autres (exclut aussi la ponctuation du coup))
+                form = token["form"].lower()
+                if not re.match(r"^\W+$", form) and not re.match(r"^[#@].+?$", form) and not re.match("^https?://.+?", form) : 
+                    forms[idTweet].append(form)
                 
     return forms
 
