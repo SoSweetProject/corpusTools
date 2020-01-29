@@ -165,13 +165,30 @@ for user,row in df.iterrows():
             nbForms = len(forms)
             uniqForms = set(forms)
             nbUniqForms = len(uniqForms)
-            # calcul et ajout du "score" de diversité du vocabulaire dans le dataframe
-            score = nbUniqForms/nbForms
+            
+            # calcul et ajout du "score" de diversité du vocabulaire dans le dataframe            
+            forms_subLists = []
+            for j in range(0,len(forms),500) : 
+                if j+500<=len(forms) :
+                    new_list = forms[j:j+500]
+                    forms_subLists.append(new_list) 
+                    
+            scores_subLists = []
+            
+            for subList in forms_subLists : 
+                nbForms_subList = len(subList)
+                nbUniqForms_subList = len(set(subList))
+                score_subList = nbUniqForms_subList/nbForms_subList
+                scores_subLists.append(score_subList)
+                
+            score = np.mean(scores_subLists)
             new_df.loc[new_df.index==user,'vocabulary_diversity']=score
+
+            # calcul et ajout du taux de formes standards sur l'ensemble des formes uniques (excepté hashtags, mentions, et suites de caractères exclusivement non alpha-numériques)
             for form in uniqForms : 
                 if form in lexique : 
                     nbStandardForm += 1
-            # calcul et ajout du taux de formes standards sur l'ensemble des formes uniques (excepté hashtags, mentions, et suites de caractères exclusivement non alpha-numériques)
+            
             standardForm_rate = nbStandardForm/len(uniqForms)
             new_df.loc[new_df.index==user,'stdForm_rate']=standardForm_rate
 
