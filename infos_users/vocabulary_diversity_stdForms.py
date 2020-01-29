@@ -168,7 +168,8 @@ for user,row in df.iterrows():
             
             # calcul et ajout du "score" de diversité du vocabulaire dans le dataframe            
             forms_subLists = []
-            for j in range(0,len(forms),500) : 
+            #for j in range(0,len(forms),500) : 
+            for j in range(0,len(forms),100) :
                 if j+500<=len(forms) :
                     new_list = forms[j:j+500]
                     forms_subLists.append(new_list) 
