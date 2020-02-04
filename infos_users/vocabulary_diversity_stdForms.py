@@ -3,6 +3,7 @@
 from multiprocessing import Pool
 from conllu import parse_incr
 import pandas as pd
+import numpy as np
 import sqlite3
 import logging
 import inspect
