@@ -176,14 +176,3 @@ new_df.to_csv("./infosUsers_complet_incorretPluralsRate.csv", sep=";")
 logger.info("Terminé")
 
 
-# In[107]:
-
-
-tweetsByUser
-
-
-# In[ ]:
-
-
-
-
