@@ -25,18 +25,20 @@ files = glob.glob(path+"*conllu")
 logger.info("Dossier d'entrée : %s"%path)
 logger.info("%i fichier à passer en revue"%len(files))
 
-dic_emoj_emot = {}
-emoj_emot = []
+emoj = []
+emot = []
 
-fileEmo = open("emoticonsRegex_2.txt", encoding="utf-8")
-for line in fileEmo : 
-     dic_emoj_emot[line.rstrip()]=len(line.rstrip())
-        
-# on trie par longueur pour avoir les plus longs motifs au début de la regex, pour que les emojis composées de plusieurs éléments ne soient pas considérées comme plusieurs emojis
-for emo in sorted(dic_emoj_emot, key = dic_emoj_emot.get, reverse=True) :
-    emoj_emot.append(emo)
-    
-re_emojEmot=re.compile('|'.join(emoj_emot))
+fileEmot = open("emoticones_sorted.txt", encoding="utf-8")
+for line in fileEmot : 
+     emot.append(line.rstrip())
+fileEmot.close()
+re_emot=re.compile('|'.join(emot))
+
+fileEmoj = open("emojis_sorted.txt", encoding="utf-8")
+for line in fileEmoj : 
+     emoj.append(line.rstrip())
+fileEmoj.close()
+re_emoj=re.compile('|'.join(emoj))
 
 
 def recup_nbEmoParTweets(file) : 
@@ -52,19 +54,26 @@ def recup_nbEmoParTweets(file) :
         try :
             idTweet = tweet.metadata["tweet_id"]
             idTweet = re.match(r'"id": "(.+?)$', idTweet).group(1)
-            nbEmo[idTweet]=0
+            nbEmo[idTweet]={"nbEmot":0, "nbEmoj":0}
         except :
             pass
 
-        nbEmojt = 0
+        nbEmot = 0
+        nbEmoj = 0
         
         tweetContent = (tweet.metadata["text"])
         
-        # On récupère le nombre d'emoticônes et d'emojis dans le tweet
-        emojt = re.findall(re_emojEmot,tweetContent)
-        nbEmojt = len(emojt)
+        # On récupère le nombre d'emoticônes dans le tweet
+        emot = re.findall(re_emot,tweetContent)
+        nbEmot = len(emot)
         
-        nbEmo[idTweet]+=nbEmojt
+        nbEmo[idTweet]["nbEmot"]+=nbEmot
+        
+        # et son nombre d'émojis
+        emoj = re.findall(re_emoj,tweetContent)
+        nbEmoj = len(emoj)
+        
+        nbEmo[idTweet]["nbEmoj"]+=nbEmoj
                                     
     return nbEmo
 
@@ -122,13 +131,17 @@ new_df = df.copy()
 new_df.index = new_df.index.astype("str")
 df.index = df.index.astype("str")
 
-new_df["nbMoyen_emojt_byTweet"] = 0
+new_df["nbMoyen_emoticones_byTweet"] = 0
+new_df["nbMoyen_emojis_byTweet"] = 0
+
 i=0 
 
 for user,row in df.iterrows():
     
-    nbMoyen_emojt_byTweet=0.0
-    nbEmojt = 0
+    nbMoyen_emot_byTweet=0.0
+    nbMoyen_emoj_byTweet=0.0
+    nbEmot = 0
+    nbEmoj = 0
 
     i+=1
 
@@ -138,23 +151,23 @@ for user,row in df.iterrows():
         tweets = tweetsByUser[user] 
         nbTweets = len(tweets)
         for tweet in tweets : 
-            nbEmojt+=allEmotj[tweet]
+            nbEmot+=allEmotj[tweet]["nbEmot"]
+            nbEmoj+=allEmotj[tweet]["nbEmoj"]
                     
     if nbTweets==0 : 
-        new_df.loc[new_df.index==user,'nbMoyen_emojt_byTweet']=None
+        new_df.loc[new_df.index==user,'nbMoyen_emoticones_byTweet']=None
+        new_df.loc[new_df.index==user,'nbMoyen_emojis_byTweet']=None
     else :
-        nbMoyen_emojt_byTweet = nbEmojt/nbTweets
-        new_df.loc[new_df.index==user,'nbMoyen_emojt_byTweet']=nbMoyen_emojt_byTweet
+        nbMoyen_emot_byTweet = nbEmot/nbTweets
+        nbMoyen_emoj_byTweet = nbEmoj/nbTweets
+        
+        new_df.loc[new_df.index==user,'nbMoyen_emoticones_byTweet']=nbMoyen_emot_byTweet
+        new_df.loc[new_df.index==user,'nbMoyen_emojis_byTweet']=nbMoyen_emoj_byTweet
     
-logger.info("Ajout du nombre moyen d'émoticônes/emojis par tweet pour chaque utilisateur dans le dataframe terminé.")
+logger.info("Ajout du nombre moyen d'émoticônes et d'émojis par tweet pour chaque utilisateur dans le dataframe terminé.")
 
 logger.info("Sauvegarde dans un nouveau dataframe 'infosUser_nbEmojt.csv'")
 
 new_df.to_csv("./infosUser_nbEmojt.csv", sep=";")
 
 logger.info("Terminé")
-
-
-
-
-
